@@ -8,5 +8,7 @@
         "parser": "angular"
       }
     }
-  ]
+  ],
+  "semi": true,
+  "trailingComma": "all"
 }
