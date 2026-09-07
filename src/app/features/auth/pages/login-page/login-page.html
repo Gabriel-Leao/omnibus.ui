@@ -1,0 +1,49 @@
+<app-comic-panel caption="Capítulo 1 — Entrar">
+  <form class="flex flex-col gap-5" (submit)="$event.preventDefault(); submit()">
+    <div>
+      <h1 class="font-display text-3xl tracking-wide text-ink">Bem-vindo de volta</h1>
+      <p class="mt-1 text-sm text-ink-soft">Entre para continuar sua coleção.</p>
+    </div>
+
+    @if (showPasswordResetNotice()) {
+      <p
+        class="rounded-sm border-2 border-ink bg-accent-yellow px-3 py-2 text-sm font-semibold text-ink"
+      >
+        Senha atualizada! Já pode entrar com a nova senha.
+      </p>
+    }
+
+    <app-input-field
+      label="E-mail"
+      type="email"
+      placeholder="voce@email.com"
+      autocomplete="email"
+      [(value)]="email"
+    />
+
+    <app-input-field
+      label="Senha"
+      type="password"
+      placeholder="••••••••"
+      autocomplete="current-password"
+      [(value)]="password"
+    />
+
+    @if (formError()) {
+      <p class="text-sm font-semibold text-accent-red">{{ formError() }}</p>
+    }
+
+    <div class="-mt-2 text-right">
+      <a routerLink="/forgot-password" class="text-sm font-semibold text-ink-soft hover:text-ink"
+        >Esqueci minha senha</a
+      >
+    </div>
+
+    <app-button type="submit" [loading]="submitting()">Entrar</app-button>
+
+    <p class="text-center text-sm text-ink-soft">
+      Ainda não tem conta?
+      <a routerLink="/register" class="font-semibold text-ink underline">Criar conta</a>
+    </p>
+  </form>
+</app-comic-panel>

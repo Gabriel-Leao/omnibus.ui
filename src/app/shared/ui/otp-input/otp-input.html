@@ -1,0 +1,14 @@
+<div class="flex justify-center gap-2 sm:gap-3" (paste)="onPaste($event)">
+  @for (index of digitIndexes; track index) {
+    <input
+      #cell
+      inputmode="numeric"
+      maxlength="1"
+      [value]="digitAt(index)"
+      (input)="onDigitInput(index, $event)"
+      (keydown)="onKeydown(index, $event)"
+      [attr.aria-label]="'Dígito ' + (index + 1) + ' do código'"
+      class="h-12 w-10 rounded-sm border-2 border-ink bg-panel text-center font-display text-2xl text-ink focus:ring-3 focus:ring-accent-yellow focus:outline-none sm:h-14 sm:w-12"
+    />
+  }
+</div>

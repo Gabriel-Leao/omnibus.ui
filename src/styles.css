@@ -1,3 +1,102 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+@import '@fontsource/bangers/latin.css';
+@import '@fontsource/bangers/latin-ext.css';
+@import '@fontsource/space-grotesk/latin.css';
+@import '@fontsource/space-grotesk/latin-ext.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Omnibus visual language: a "newsprint by day, ink by night" comic-panel look.
+ * Colors live as CSS custom properties so a single `.dark` class swap on <html>
+ * repaints every Tailwind utility that references them — no duplicated palette.
+ */
+@theme {
+  --color-paper: #f2e8d5;
+  --color-panel: #fbf5e7;
+  --color-ink: #1b1b1b;
+  --color-ink-soft: #55524a;
+  --color-accent-red: #e8462a;
+  --color-accent-blue: #2c5aa3;
+  --color-accent-yellow: #f4b942;
+
+  --font-display: 'Bangers', system-ui, sans-serif;
+  --font-body: 'Space Grotesk', system-ui, sans-serif;
+
+  --shadow-comic: 6px 6px 0 0 var(--color-ink);
+  --shadow-comic-sm: 3px 3px 0 0 var(--color-ink);
+}
+
+:root {
+  color-scheme: light;
+}
+
+/* Night mode reads as deep navy ink, not plain black — closer to a printed
+   comic's night panels than to a generic dark-UI theme. */
+.dark {
+  color-scheme: dark;
+  --color-paper: #0e1224;
+  --color-panel: #171c38;
+  --color-ink: #ece8f5;
+  --color-ink-soft: #a3a1c4;
+  --color-accent-red: #ff6a4a;
+  --color-accent-blue: #7ea1e8;
+  --color-accent-yellow: #f4b942;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+/* Halftone dot texture, used behind hero panels. Density and color follow currentColor. */
+.bg-halftone {
+  background-image: radial-gradient(currentColor 1.4px, transparent 1.4px);
+  background-size: 14px 14px;
+}
+
+/* Comic sound-effect burst, used as a decorative backdrop shape. */
+.comic-burst {
+  clip-path: polygon(
+    50% 0%,
+    61% 12%,
+    78% 3%,
+    82% 21%,
+    100% 25%,
+    93% 42%,
+    100% 61%,
+    83% 68%,
+    82% 87%,
+    63% 82%,
+    50% 100%,
+    37% 82%,
+    18% 87%,
+    17% 68%,
+    0% 61%,
+    7% 42%,
+    0% 25%,
+    18% 21%,
+    22% 3%,
+    39% 12%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,57 @@
+<app-comic-panel caption="Origem — Criar conta">
+  <form class="flex flex-col gap-5" (submit)="$event.preventDefault(); submit()">
+    <div>
+      <h1 class="font-display text-3xl tracking-wide text-ink">Comece sua coleção</h1>
+      <p class="mt-1 text-sm text-ink-soft">Leva menos de um minuto.</p>
+    </div>
+
+    <app-input-field
+      label="Nome"
+      placeholder="Seu nome completo"
+      autocomplete="name"
+      [(value)]="name"
+    />
+
+    <app-input-field
+      label="E-mail"
+      type="email"
+      placeholder="voce@email.com"
+      autocomplete="email"
+      [(value)]="email"
+    />
+
+    <app-input-field
+      label="Data de nascimento"
+      type="date"
+      hint="É preciso ter 18 anos ou mais."
+      [(value)]="birthDate"
+    />
+
+    <app-input-field
+      label="Senha"
+      type="password"
+      placeholder="Mínimo de 8 caracteres"
+      autocomplete="new-password"
+      [(value)]="password"
+    />
+
+    <app-input-field
+      label="Confirmar senha"
+      type="password"
+      placeholder="Repita a senha"
+      autocomplete="new-password"
+      [(value)]="confirmPassword"
+    />
+
+    @if (formError()) {
+      <p class="text-sm font-semibold text-accent-red">{{ formError() }}</p>
+    }
+
+    <app-button type="submit" [loading]="submitting()">Criar conta</app-button>
+
+    <p class="text-center text-sm text-ink-soft">
+      Já tem conta?
+      <a routerLink="/login" class="font-semibold text-ink underline">Entrar</a>
+    </p>
+  </form>
+</app-comic-panel>

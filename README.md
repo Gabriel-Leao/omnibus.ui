@@ -26,22 +26,23 @@ negócio.
 
 ## 🚀 Stack Tecnológica
 
-| Categoria             | Tecnologia                                              |
-|-----------------------|----------------------------------------------------------|
-| Framework             | Angular 21 (standalone, zoneless — sem `zone.js` instalado) |
-| Renderização          | SSR via `@angular/ssr` + Express (servidor em `src/server.ts`) |
-| Linguagem             | TypeScript 5.9 (modo `strict`)                          |
-| Estilização           | Tailwind CSS 4 (via `@tailwindcss/postcss`)             |
-| Reatividade           | Angular Signals (no componente raiz) + RxJS (dependência instalada, ainda sem uso) |
-| Roteamento            | Angular Router (`provideRouter`, sem rotas definidas)   |
-| Qualidade de código   | ESLint (flat config) + `angular-eslint` + Prettier      |
-| Ordenação de imports  | `eslint-plugin-simple-import-sort`                      |
-| Testes unitários      | Vitest, via builder unificado do Angular CLI (`@angular/build:unit-test`) |
-| Package manager       | npm                                                      |
+| Categoria            | Tecnologia                                                                         |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| Framework            | Angular 21 (standalone, zoneless — sem `zone.js` instalado)                        |
+| Renderização         | SSR via `@angular/ssr` + Express (servidor em `src/server.ts`)                     |
+| Linguagem            | TypeScript 5.9 (modo `strict`)                                                     |
+| Estilização          | Tailwind CSS 4 (via `@tailwindcss/postcss`)                                        |
+| Reatividade          | Angular Signals (no componente raiz) + RxJS (dependência instalada, ainda sem uso) |
+| Roteamento           | Angular Router (`provideRouter`, sem rotas definidas)                              |
+| Qualidade de código  | ESLint (flat config) + `angular-eslint` + Prettier                                 |
+| Ordenação de imports | `eslint-plugin-simple-import-sort`                                                 |
+| Testes unitários     | Vitest, via builder unificado do Angular CLI (`@angular/build:unit-test`)          |
+| CI                   | GitHub Actions (`.github/workflows/ci.yml`, portão de qualidade)                   |
+| Deploy               | Vercel (integração nativa com o GitHub)                                            |
+| Package manager      | npm                                                                                |
 
-Tecnologias mencionadas na proposta original do projeto mas **ainda não presentes** no repositório:
-Playwright (testes E2E) e GitHub Actions (CI). Ambas estão descritas como planejadas nas seções
-correspondentes.
+Tecnologia mencionada na proposta original do projeto mas **ainda não presente** no repositório:
+Playwright (testes E2E) — descrito como planejado na seção correspondente.
 
 ---
 
@@ -193,23 +194,45 @@ usuário não autenticado) — a autorização definitiva continua sendo respons
 
 ## 🔌 Integração com a API
 
-Ainda não existe nenhuma camada de comunicação HTTP no projeto: não há `provideHttpClient`
-configurado em `app.config.ts`, nem services de infraestrutura, nem interceptors.
+O `AuthApiService` (`core/auth/auth-api.service.ts`) concentra a comunicação com `omnibus.api`,
+cobrindo `/auth/login`, `/auth/register`, `/auth/activate`, `/auth/resend-activation`,
+`/password-reset`, `/password-reset/verify` e `/password-reset/confirm`. Um interceptor
+(`errorLoggingInterceptor`) loga no console o status e o corpo de erro retornado pela API em toda
+requisição que falhar.
 
-A direção planejada é concentrar essas responsabilidades em `core/http`, incluindo interceptors para
-autenticação e tratamento padronizado de erros, consumindo a API REST exposta pelo `omnibus.api`.
+A URL base da API é centralizada em `environments/environment.ts` — o serviço importa `environment`
+diretamente, sem camada de indireção.
 
 ---
 
 ## ⚙️ Configuração de Ambiente
 
-O projeto não possui, no momento, arquivos de ambiente (`environment.ts`,
-`environment.development.ts` ou equivalentes) nem um diretório `environments/`. Não há, portanto,
-configuração de URL de API ou de outras variáveis por ambiente ainda implementada.
+O projeto usa o mecanismo nativo do Angular para valores por ambiente: **file replacements**, não
+variáveis de ambiente lidas em runtime nem scripts de geração. `environment.ts` é a configuração
+padrão (usada quando nenhuma configuration é especificada); `environment.development.ts` é trocado
+no lugar dele quando o build roda com a configuration `development` — troca declarada em
+`fileReplacements`, dentro de `angular.json`:
 
-Qualquer valor que vier a ser adicionado a esses arquivos futuramente deve ser tratado como público,
-já que é incluído no bundle enviado ao navegador — nenhum segredo real deve ser colocado no
-frontend.
+```json
+"development": {
+  "fileReplacements": [
+    { "replace": "src/environments/environment.ts", "with": "src/environments/environment.development.ts" }
+  ]
+}
+```
+
+`npm run dev` e `npm run watch` já usam a configuration `development` (`http://localhost:8080`);
+`npm run build` usa a configuration padrão, `production` (`environment.ts`, hoje com
+`https://api.omnibus.com`).
+
+Para adicionar um novo ambiente (ex.: staging), o caminho é: criar
+`src/environments/environment.staging.ts` com os valores daquele ambiente, registrar um bloco
+`staging` com seu próprio `fileReplacements` em `angular.json`, e buildar com
+`ng build --configuration staging`. Trocar de ambiente significa trocar qual arquivo entra no
+build — o valor fica versionado no repositório, não vem de fora em tempo de execução.
+
+Qualquer valor colocado em `environments/` deve ser tratado como público: esses arquivos são
+compilados para o bundle enviado ao navegador. Nenhum segredo real deve ser colocado aqui.
 
 ---
 
@@ -293,9 +316,38 @@ npm run format:check    # Prettier --check
 
 ## 🔄 Integração Contínua
 
-Não há workflows configurados em `.github/workflows/` — o pipeline de CI ainda não existe no
-repositório. A intenção é que, quando implementado, o pipeline valide lint, testes, formatação e
-build a cada mudança.
+`.github/workflows/ci.yml` roda em pull requests e pushes para `main`: `npm run lint`,
+`npm run format:check`, `npm test -- --watch=false` e `npm run build`, nessa ordem — qualquer
+falha interrompe o workflow. Esse workflow é só um portão de qualidade; **ele não publica nada**.
+
+---
+
+## ☁️ Deploy
+
+O deploy é feito pela própria Vercel, através da integração nativa dela com o GitHub — sem
+GitHub Actions envolvido nessa parte. Configuração (feita uma vez, pelo painel da Vercel):
+
+1. Em [vercel.com](https://vercel.com), importe o repositório do GitHub.
+2. Em **Project Settings → Build & Development Settings**, sobrescreva o Build Command para:
+   ```
+   echo "export const environment = { production: true, apiUrl: '$OMNIBUS_API_URL' };" > src/environments/environment.ts && npm run build
+   ```
+   Confira também o Output Directory — o esperado é `dist/omnibus.ui/browser`.
+3. Em **Project Settings → Environment Variables**, adicione `OMNIBUS_API_URL` com a URL real da
+   API (pode ter um valor para Production e outro para Preview, se quiser que PRs apontem para um
+   ambiente de staging).
+
+A partir daí, todo push em `main` publica em produção e todo Pull Request ganha uma URL de preview
+automática — sem token nem secret do GitHub, e sem a URL real da API aparecer em nenhum momento no
+repositório: ela mora só na Vercel.
+
+Como a aplicação é inteiramente pré-renderizada (`RenderMode.Prerender` em todas as rotas), o
+resultado do build já é HTML estático por rota; não é necessário rodar o servidor Express
+(`server.ts`) em produção para essa hospedagem. `vercel.json`, na raiz do projeto, configura o
+fallback para `index.csr.html` em qualquer caminho que não corresponda a um arquivo pré-renderizado
+— é o que permite a página 404 temática aparecer para rotas inexistentes, em vez do 404 genérico do
+host (arquivos estáticos existentes, como `/login`, continuam servidos diretamente; a Vercel só cai
+no rewrite quando nada bate).
 
 ---
 
@@ -309,8 +361,8 @@ build a cada mudança.
 - [x] Runner de testes unitários (Vitest) configurado
 - [ ] Estrutura de diretórios por feature (`core`, `shared`, `features`)
 - [ ] Definição de rotas da aplicação
-- [ ] Camada de comunicação HTTP com a API (`provideHttpClient`, interceptors)
-- [ ] Configuração de ambientes (`environments/`)
+- [x] Camada de comunicação HTTP com a API (`provideHttpClient`, interceptors)
+- [x] Configuração de ambientes (`environments/`, via `fileReplacements` nativo do Angular)
 - [ ] Autenticação (login, registro, ativação por OTP, recuperação de senha)
 - [ ] Catálogo de produtos
 - [ ] Carrinho
@@ -318,7 +370,8 @@ build a cada mudança.
 - [ ] Wishlist
 - [ ] Componentes de UI reutilizáveis / design system (`shared/ui`)
 - [ ] Testes end-to-end com Playwright
-- [ ] Pipeline de CI (GitHub Actions)
+- [x] Pipeline de CI (GitHub Actions — lint, testes, formatação e build)
+- [x] Deploy (Vercel, integração nativa com o GitHub)
 
 ---
 

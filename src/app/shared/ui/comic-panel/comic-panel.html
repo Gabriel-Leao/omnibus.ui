@@ -1,0 +1,15 @@
+<div class="relative">
+  @if (caption()) {
+    <span
+      class="absolute -top-3.5 left-5 z-10 rounded-sm border-2 border-ink bg-accent-yellow px-3 py-0.5 font-display text-base tracking-wide text-ink"
+    >
+      {{ caption() }}
+    </span>
+  }
+
+  <div
+    class="rounded-sm border-2 border-ink bg-panel px-6 py-8 shadow-[var(--shadow-comic)] sm:px-9 sm:py-10"
+  >
+    <ng-content />
+  </div>
+</div>

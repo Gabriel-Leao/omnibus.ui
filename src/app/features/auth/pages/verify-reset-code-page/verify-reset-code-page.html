@@ -1,0 +1,80 @@
+<app-comic-panel caption="Recuperar senha — Código">
+  <form class="flex flex-col gap-6" (submit)="$event.preventDefault(); submit()">
+    <div>
+      <h1 class="font-display text-3xl tracking-wide text-ink">Digite o código</h1>
+      <p class="mt-1 text-sm text-ink-soft">
+        Enviamos 6 dígitos para
+        @if (email()) {
+          <span class="font-semibold text-ink">{{ email() }}</span>
+        } @else {
+          seu e-mail
+        }
+        .
+      </p>
+    </div>
+
+    <app-otp-input [(value)]="code" />
+
+    @if (formError()) {
+      <p class="text-center text-sm font-semibold text-accent-red">{{ formError() }}</p>
+    }
+
+    <app-button type="submit" [loading]="submitting()">Confirmar código</app-button>
+
+    <button
+      type="button"
+      (click)="openResendModal()"
+      class="text-center text-sm font-semibold text-ink-soft underline hover:text-ink"
+    >
+      Reenviar código
+    </button>
+
+    <a routerLink="/login" class="text-center text-sm text-ink-soft hover:text-ink">
+      ← Voltar para o login
+    </a>
+  </form>
+</app-comic-panel>
+
+<app-modal
+  [open]="showResendModal()"
+  title="Olha sua caixa de entrada!"
+  (closed)="showResendModal.set(false)"
+>
+  <p>
+    Se o e-mail informado tiver uma conta, o código já foi enviado. Não chegou em alguns minutos? Dá
+    uma espiada na caixa de spam — o carteiro às vezes se perde no caminho.
+  </p>
+
+  @if (otpTimer.exhausted()) {
+    <p
+      class="mt-4 rounded-sm border-2 border-ink bg-accent-yellow px-3 py-2 text-sm font-semibold text-ink"
+    >
+      Você já usou os códigos disponíveis nas últimas 24 horas. Tenta de novo mais tarde.
+    </p>
+  } @else {
+    <div class="mt-4">
+      <app-button
+        variant="secondary"
+        [disabled]="!otpTimer.canResend()"
+        [loading]="resendStatus() === 'sending'"
+        (click)="confirmResend()"
+      >
+        @if (otpTimer.remainingSeconds() > 0) {
+          Aguarde {{ otpTimer.remainingSeconds() }}s
+        } @else {
+          Reenviar agora
+        }
+      </app-button>
+
+      @if (resendStatus() === 'sent') {
+        <p class="mt-2 text-center text-sm font-semibold text-accent-blue">
+          Reenviado! ({{ otpTimer.resendsLeft() }} reenvio(s) restante(s))
+        </p>
+      } @else if (resendStatus() === 'error') {
+        <p class="mt-2 text-center text-sm font-semibold text-accent-red">
+          {{ resendErrorMessage() }}
+        </p>
+      }
+    </div>
+  }
+</app-modal>

@@ -1,0 +1,32 @@
+<button
+  type="button"
+  (click)="themeService.toggle()"
+  [attr.aria-label]="themeService.theme() === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'"
+  [title]="themeService.theme() === 'dark' ? 'Modo claro' : 'Modo escuro'"
+  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-panel text-ink shadow-[var(--shadow-comic-sm)] transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+>
+  @if (themeService.theme() === 'dark') {
+    <!-- Night: a bat, wings spread — a generic silhouette, not the Bat-Signal
+         emblem (that shield shape is DC/WB's trademark). -->
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <polygon
+        points="10.3,10 1,7.5 3.5,11 1.5,12 4.5,13.2 2.5,15.5 6,14.3 7,17 8.7,13.5 10.3,15"
+      />
+      <polygon
+        points="13.7,10 23,7.5 20.5,11 22.5,12 19.5,13.2 21.5,15.5 18,14.3 17,17 15.3,13.5 13.7,15"
+      />
+      <ellipse cx="12" cy="12.5" rx="1.8" ry="3.2" />
+      <polygon points="9.6,8.2 10.6,4 11.6,8.6" />
+      <polygon points="12.4,8.6 13.4,4 14.4,8.2" />
+    </svg>
+  } @else {
+    <!-- Day: a bold, angular comic-book sun — the kind of light Metropolis
+         gets. Geometric rays, no character or logo. -->
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <polygon
+        points="12,1 14.49,5.95 19.78,4.22 18.01,9.51 23,12 18.01,14.49 19.78,19.78 14.49,18.05 12,23 9.51,18.05 4.22,19.78 5.99,14.49 1,12 5.99,9.51 4.22,4.22 9.51,5.95"
+      />
+      <circle cx="12" cy="12" r="5.5" />
+    </svg>
+  }
+</button>
