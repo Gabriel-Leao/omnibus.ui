@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
+import { I18nService } from '@/app/core/i18n/i18n.service';
 import { ErrorPage } from '@/app/features/errors/error-page/error-page';
 
 @Component({
@@ -8,9 +9,11 @@ import { ErrorPage } from '@/app/features/errors/error-page/error-page';
   template: `
     <app-error-page
       code="404"
-      title="Essa edição não existe nesse universo"
-      message="A página que você procura foi cancelada, nunca foi publicada ou mudou de editora. Confere o endereço ou volta para a capa."
+      [title]="i18n.dict().notFound.title"
+      [message]="i18n.dict().notFound.message"
     />
   `,
 })
-export class NotFoundPage {}
+export class NotFoundPage {
+  protected readonly i18n = inject(I18nService);
+}

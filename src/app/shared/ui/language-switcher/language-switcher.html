@@ -1,0 +1,54 @@
+<div class="relative">
+  <button
+    type="button"
+    (click)="toggle()"
+    [attr.aria-label]="i18n.dict().languageSwitcher.ariaLabel"
+    [attr.aria-expanded]="open()"
+    aria-haspopup="listbox"
+    [title]="i18n.dict().languageSwitcher.title"
+    class="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-ink bg-panel text-ink shadow-[var(--shadow-comic-sm)] transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+  >
+    <!-- Generic globe glyph: outline sphere with a couple of meridian/parallel
+         lines. No flags, no branding — just the universal "language" icon. -->
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+      <ellipse cx="12" cy="12" rx="4" ry="9" stroke="currentColor" stroke-width="1.8" />
+      <path
+        d="M3.3 9h17.4M3.3 15h17.4"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+      />
+    </svg>
+  </button>
+
+  @if (open()) {
+    <div
+      #panel
+      role="listbox"
+      tabindex="-1"
+      [attr.aria-label]="i18n.dict().languageSwitcher.ariaLabel"
+      (keydown.escape)="close()"
+      class="absolute top-full right-0 z-50 mt-2 w-44 overflow-hidden rounded-sm border-2 border-ink bg-panel shadow-[var(--shadow-comic-sm)] focus:outline-none"
+    >
+      @for (locale of i18n.supportedLocales; track locale) {
+        <button
+          type="button"
+          role="option"
+          [attr.aria-selected]="i18n.locale() === locale"
+          (click)="select(locale)"
+          class="flex w-full cursor-pointer items-center justify-between px-3.5 py-2.5 text-left font-body text-sm text-ink"
+          [class.bg-accent-yellow]="i18n.locale() === locale"
+          [class.font-semibold]="i18n.locale() === locale"
+          [class.hover:bg-ink]="i18n.locale() !== locale"
+          [class.hover:text-panel]="i18n.locale() !== locale"
+        >
+          <span>{{ i18n.labels[locale] }}</span>
+          @if (i18n.locale() === locale) {
+            <span aria-hidden="true">✓</span>
+          }
+        </button>
+      }
+    </div>
+  }
+</div>

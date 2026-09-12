@@ -1,9 +1,8 @@
-<app-comic-panel caption="Em construção">
+<app-comic-panel [caption]="i18n.dict().home.caption">
   <div class="flex flex-col items-center gap-3 text-center">
-    <h1 class="font-display text-3xl tracking-wide text-ink">A loja ainda está no rascunho</h1>
+    <h1 class="font-display text-3xl tracking-wide text-ink">{{ i18n.dict().home.title }}</h1>
     <p class="text-sm text-ink-soft">
-      O catálogo, o carrinho e os pedidos ainda estão sendo desenhados nas próximas pranchas. Por
-      enquanto, sua conta já está pronta e esperando pela primeira edição.
+      {{ i18n.dict().home.body }}
     </p>
   </div>
 </app-comic-panel>

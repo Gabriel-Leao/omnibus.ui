@@ -1,4 +1,6 @@
-import { Component, type ElementRef, model, viewChildren } from '@angular/core';
+import { Component, type ElementRef, inject, model, viewChildren } from '@angular/core';
+
+import { I18nService } from '@/app/core/i18n/i18n.service';
 
 const DIGIT_COUNT = 6;
 
@@ -7,6 +9,8 @@ const DIGIT_COUNT = 6;
   templateUrl: './otp-input.html',
 })
 export class OtpInput {
+  protected readonly i18n = inject(I18nService);
+
   readonly value = model('');
 
   protected readonly digitIndexes = Array.from({ length: DIGIT_COUNT }, (_, i) => i);

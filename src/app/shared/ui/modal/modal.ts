@@ -1,10 +1,22 @@
-import { Component, effect, type ElementRef, input, output, viewChild } from '@angular/core';
+import {
+  Component,
+  effect,
+  type ElementRef,
+  inject,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
+
+import { I18nService } from '@/app/core/i18n/i18n.service';
 
 @Component({
   selector: 'app-modal',
   templateUrl: './modal.html',
 })
 export class Modal {
+  protected readonly i18n = inject(I18nService);
+
   readonly open = input(false);
   readonly title = input('');
   readonly closed = output<void>();

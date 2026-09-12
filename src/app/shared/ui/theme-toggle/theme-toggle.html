@@ -1,9 +1,17 @@
 <button
   type="button"
   (click)="themeService.toggle()"
-  [attr.aria-label]="themeService.theme() === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'"
-  [title]="themeService.theme() === 'dark' ? 'Modo claro' : 'Modo escuro'"
-  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-panel text-ink shadow-[var(--shadow-comic-sm)] transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+  [attr.aria-label]="
+    themeService.theme() === 'dark'
+      ? i18n.dict().themeToggle.ariaSwitchToLight
+      : i18n.dict().themeToggle.ariaSwitchToDark
+  "
+  [title]="
+    themeService.theme() === 'dark'
+      ? i18n.dict().themeToggle.titleLight
+      : i18n.dict().themeToggle.titleDark
+  "
+  class="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-ink bg-panel text-ink shadow-[var(--shadow-comic-sm)] transition-transform active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
 >
   @if (themeService.theme() === 'dark') {
     <!-- Night: a bat, wings spread — a generic silhouette, not the Bat-Signal

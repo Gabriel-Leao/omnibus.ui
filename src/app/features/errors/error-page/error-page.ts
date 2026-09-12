@@ -1,6 +1,7 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { I18nService } from '@/app/core/i18n/i18n.service';
 import { ThemeToggle } from '@/app/shared/ui/theme-toggle/theme-toggle';
 
 /**
@@ -13,6 +14,8 @@ import { ThemeToggle } from '@/app/shared/ui/theme-toggle/theme-toggle';
   templateUrl: './error-page.html',
 })
 export class ErrorPage {
+  protected readonly i18n = inject(I18nService);
+
   readonly code = input.required<string>();
   readonly title = input.required<string>();
   readonly message = input.required<string>();

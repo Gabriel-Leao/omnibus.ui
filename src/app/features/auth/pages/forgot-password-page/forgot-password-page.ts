@@ -1,8 +1,10 @@
 import type { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthApiService } from '@/app/core/auth/auth-api.service';
+import type { ErrorResolver } from '@/app/core/i18n/error-resolver';
+import { I18nService } from '@/app/core/i18n/i18n.service';
 import { Button } from '@/app/shared/ui/button/button';
 import { ComicPanel } from '@/app/shared/ui/comic-panel/comic-panel';
 import { InputField } from '@/app/shared/ui/input-field/input-field';
@@ -17,19 +19,22 @@ import { isValidEmail } from '@/app/shared/utils/validators';
 export class ForgotPasswordPage {
   private readonly authApi = inject(AuthApiService);
   private readonly router = inject(Router);
+  protected readonly i18n = inject(I18nService);
 
   protected readonly email = signal('');
   protected readonly submitting = signal(false);
-  protected readonly formError = signal<string | null>(null);
+
+  private readonly errorResolver = signal<ErrorResolver | null>(null);
+  protected readonly formError = computed(() => this.errorResolver()?.(this.i18n.dict()) ?? null);
+
+  protected readonly formValid = computed(() => isValidEmail(this.email()));
 
   protected submit(): void {
-    this.formError.set(null);
-
-    if (!isValidEmail(this.email())) {
-      this.formError.set('Digite um e-mail válido.');
+    if (!this.formValid()) {
       return;
     }
 
+    this.errorResolver.set(null);
     this.submitting.set(true);
     this.authApi.requestPasswordReset({ email: this.email().trim() }).subscribe({
       next: () => {
@@ -39,11 +44,8 @@ export class ForgotPasswordPage {
       },
       error: (error: HttpErrorResponse) => {
         this.submitting.set(false);
-        this.formError.set(
-          extractApiErrorMessage(
-            error,
-            'Não deu pra enviar o código agora. Tenta de novo em instantes.',
-          ),
+        this.errorResolver.set((t) =>
+          extractApiErrorMessage(error, t.auth.forgotPassword.fallbackError, t.apiErrors),
         );
       },
     });

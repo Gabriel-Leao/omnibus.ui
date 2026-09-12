@@ -1,13 +1,39 @@
 import type { HttpErrorResponse } from '@angular/common/http';
 
 import type { ApiErrorResponse } from '@/app/core/auth/auth.models';
+import {
+  API_ERROR_MESSAGE_MAP,
+  CUSTOMER_NOT_FOUND_PREFIX,
+} from '@/app/core/i18n/api-error-translations';
+import type { Translations } from '@/app/core/i18n/translations/translations';
 
 /**
- * Prefers the message omnibus.api's GlobalExceptionHandler actually sent
- * back (ApiErrorResponse.message) over a hardcoded guess, falling back only
- * when the response isn't in that shape (e.g. the API is unreachable).
+ * Resolves the message to show for a failed API call, in the reader's
+ * current language.
+ *
+ * omnibus.api's GlobalExceptionHandler always sends back a `message`, but
+ * it's a hardcoded backend string with no locale of its own. Only messages
+ * recognised in `API_ERROR_MESSAGE_MAP` are translated and shown; anything
+ * else (an unreachable API, a new backend exception this map hasn't caught
+ * up with) falls back to the calling page's own localized fallback instead
+ * of leaking untranslated or overly technical text.
  */
-export function extractApiErrorMessage(error: HttpErrorResponse, fallback: string): string {
+export function extractApiErrorMessage(
+  error: HttpErrorResponse,
+  fallback: string,
+  apiErrors: Translations['apiErrors'],
+): string {
   const body = error.error as Partial<ApiErrorResponse> | null;
-  return body?.message?.trim() || fallback;
+  const backendMessage = body?.message?.trim();
+
+  if (!backendMessage) {
+    return fallback;
+  }
+
+  if (backendMessage.startsWith(CUSTOMER_NOT_FOUND_PREFIX)) {
+    return apiErrors.customerNotFound;
+  }
+
+  const key = API_ERROR_MESSAGE_MAP[backendMessage];
+  return key ? apiErrors[key] : fallback;
 }

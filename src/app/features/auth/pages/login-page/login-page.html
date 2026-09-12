@@ -1,30 +1,32 @@
-<app-comic-panel caption="Capítulo 1 — Entrar">
+<app-comic-panel [caption]="i18n.dict().auth.login.caption">
   <form class="flex flex-col gap-5" (submit)="$event.preventDefault(); submit()">
     <div>
-      <h1 class="font-display text-3xl tracking-wide text-ink">Bem-vindo de volta</h1>
-      <p class="mt-1 text-sm text-ink-soft">Entre para continuar sua coleção.</p>
+      <h1 class="font-display text-3xl tracking-wide text-ink">
+        {{ i18n.dict().auth.login.title }}
+      </h1>
+      <p class="mt-1 text-sm text-ink-soft">{{ i18n.dict().auth.login.subtitle }}</p>
     </div>
 
     @if (showPasswordResetNotice()) {
       <p
         class="rounded-sm border-2 border-ink bg-accent-yellow px-3 py-2 text-sm font-semibold text-ink"
       >
-        Senha atualizada! Já pode entrar com a nova senha.
+        {{ i18n.dict().auth.login.passwordResetNotice }}
       </p>
     }
 
     <app-input-field
-      label="E-mail"
+      [label]="i18n.dict().auth.login.emailLabel"
       type="email"
-      placeholder="voce@email.com"
+      [placeholder]="i18n.dict().auth.login.emailPlaceholder"
       autocomplete="email"
       [(value)]="email"
     />
 
     <app-input-field
-      label="Senha"
+      [label]="i18n.dict().auth.login.passwordLabel"
       type="password"
-      placeholder="••••••••"
+      [placeholder]="i18n.dict().auth.login.passwordPlaceholder"
       autocomplete="current-password"
       [(value)]="password"
     />
@@ -34,16 +36,20 @@
     }
 
     <div class="-mt-2 text-right">
-      <a routerLink="/forgot-password" class="text-sm font-semibold text-ink-soft hover:text-ink"
-        >Esqueci minha senha</a
-      >
+      <a routerLink="/forgot-password" class="text-sm font-semibold text-ink-soft hover:text-ink">{{
+        i18n.dict().auth.login.forgotLink
+      }}</a>
     </div>
 
-    <app-button type="submit" [loading]="submitting()">Entrar</app-button>
+    <app-button type="submit" [loading]="submitting()" [disabled]="!formValid()">{{
+      i18n.dict().auth.login.submit
+    }}</app-button>
 
     <p class="text-center text-sm text-ink-soft">
-      Ainda não tem conta?
-      <a routerLink="/register" class="font-semibold text-ink underline">Criar conta</a>
+      {{ i18n.dict().auth.login.noAccount }}
+      <a routerLink="/register" class="font-semibold text-ink underline">{{
+        i18n.dict().auth.login.createAccountLink
+      }}</a>
     </p>
   </form>
 </app-comic-panel>

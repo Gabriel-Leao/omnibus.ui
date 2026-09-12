@@ -9,6 +9,7 @@
       [type]="resolvedType"
       [placeholder]="placeholder()"
       [autocomplete]="autocomplete()"
+      [attr.inputmode]="inputmode()"
       [value]="value()"
       (input)="onInput($event)"
       [attr.aria-invalid]="!!error()"
@@ -20,7 +21,11 @@
         type="button"
         (click)="togglePasswordVisibility()"
         class="absolute top-1/2 right-3 -translate-y-1/2 text-ink-soft hover:text-ink"
-        [attr.aria-label]="passwordVisible() ? 'Ocultar senha' : 'Mostrar senha'"
+        [attr.aria-label]="
+          passwordVisible()
+            ? i18n.dict().inputField.hidePassword
+            : i18n.dict().inputField.showPassword
+        "
       >
         @if (passwordVisible()) {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">

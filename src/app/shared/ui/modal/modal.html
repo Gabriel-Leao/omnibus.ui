@@ -14,7 +14,7 @@
       <button
         type="button"
         (click)="close()"
-        aria-label="Fechar"
+        [attr.aria-label]="i18n.dict().modal.close"
         class="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-full border-2 border-ink text-sm font-bold text-ink hover:bg-accent-yellow"
       >
         ✕

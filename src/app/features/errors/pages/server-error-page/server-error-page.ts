@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
+import { I18nService } from '@/app/core/i18n/i18n.service';
 import { ErrorPage } from '@/app/features/errors/error-page/error-page';
 
 @Component({
@@ -8,9 +9,11 @@ import { ErrorPage } from '@/app/features/errors/error-page/error-page';
   template: `
     <app-error-page
       code="500"
-      title="A gráfica travou nessa página"
-      message="Algo deu errado do nosso lado. Já chamamos a equipe de arte-final; tenta de novo em alguns instantes."
+      [title]="i18n.dict().serverError.title"
+      [message]="i18n.dict().serverError.message"
     />
   `,
 })
-export class ServerErrorPage {}
+export class ServerErrorPage {
+  protected readonly i18n = inject(I18nService);
+}

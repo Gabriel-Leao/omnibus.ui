@@ -3,10 +3,13 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthApiService } from '@/app/core/auth/auth-api.service';
+import type { ErrorResolver } from '@/app/core/i18n/error-resolver';
+import { I18nService } from '@/app/core/i18n/i18n.service';
 import { Button } from '@/app/shared/ui/button/button';
 import { ComicPanel } from '@/app/shared/ui/comic-panel/comic-panel';
 import { InputField } from '@/app/shared/ui/input-field/input-field';
 import { extractApiErrorMessage } from '@/app/shared/utils/api-error';
+import { type DateOrder, formatDateInput, parseDateInputToIso } from '@/app/shared/utils/date-mask';
 import {
   isAtLeastAge,
   isValidEmail,
@@ -24,46 +27,49 @@ const MINIMUM_AGE = 18;
 export class RegisterPage {
   private readonly authApi = inject(AuthApiService);
   private readonly router = inject(Router);
+  protected readonly i18n = inject(I18nService);
 
   protected readonly name = signal('');
   protected readonly email = signal('');
   protected readonly password = signal('');
   protected readonly confirmPassword = signal('');
-  protected readonly birthDate = signal('');
+  protected readonly birthDateDisplay = signal('');
 
   protected readonly submitting = signal(false);
-  protected readonly formError = signal<string | null>(null);
 
-  protected readonly maxBirthDate = computed(() => {
-    const today = new Date();
-    today.setFullYear(today.getFullYear() - MINIMUM_AGE);
-    return today.toISOString().slice(0, 10);
+  private readonly errorResolver = signal<ErrorResolver | null>(null);
+  protected readonly formError = computed(() => this.errorResolver()?.(this.i18n.dict()) ?? null);
+
+  /** US reads a date as month/day/year; every other supported locale reads it as day/month/year. */
+  protected readonly dateOrder = computed<DateOrder>(() =>
+    this.i18n.locale() === 'en-US' ? 'mdy' : 'dmy',
+  );
+
+  protected readonly formatBirthDate = formatDateInput;
+
+  protected readonly birthDateIso = computed(() =>
+    parseDateInputToIso(this.birthDateDisplay(), this.dateOrder()),
+  );
+
+  protected readonly formValid = computed(() => {
+    const birthDateIso = this.birthDateIso();
+    return (
+      this.name().trim().length >= 3 &&
+      isValidEmail(this.email()) &&
+      isValidPassword(this.password()) &&
+      passwordsMatch(this.password(), this.confirmPassword()) &&
+      !!birthDateIso &&
+      isAtLeastAge(birthDateIso, MINIMUM_AGE)
+    );
   });
 
   protected submit(): void {
-    this.formError.set(null);
-
-    if (this.name().trim().length < 3) {
-      this.formError.set('Conta seu nome pra gente (mínimo 3 caracteres).');
-      return;
-    }
-    if (!isValidEmail(this.email())) {
-      this.formError.set('Digite um e-mail válido.');
-      return;
-    }
-    if (!isValidPassword(this.password())) {
-      this.formError.set('A senha precisa ter entre 8 e 72 caracteres.');
-      return;
-    }
-    if (!passwordsMatch(this.password(), this.confirmPassword())) {
-      this.formError.set('As senhas não coincidem.');
-      return;
-    }
-    if (!this.birthDate() || !isAtLeastAge(this.birthDate(), MINIMUM_AGE)) {
-      this.formError.set('É preciso ter 18 anos ou mais para se cadastrar.');
+    const birthDateIso = this.birthDateIso();
+    if (!this.formValid() || !birthDateIso) {
       return;
     }
 
+    this.errorResolver.set(null);
     this.submitting.set(true);
     this.authApi
       .register({
@@ -71,7 +77,7 @@ export class RegisterPage {
         email: this.email().trim(),
         password: this.password(),
         confirmPassword: this.confirmPassword(),
-        birthDate: this.birthDate(),
+        birthDate: birthDateIso,
       })
       .subscribe({
         next: () => {
@@ -81,11 +87,8 @@ export class RegisterPage {
         },
         error: (error: HttpErrorResponse) => {
           this.submitting.set(false);
-          this.formError.set(
-            extractApiErrorMessage(
-              error,
-              'Não deu pra completar o cadastro agora. Tenta de novo em instantes.',
-            ),
+          this.errorResolver.set((t) =>
+            extractApiErrorMessage(error, t.auth.register.fallbackError, t.apiErrors),
           );
         },
       });

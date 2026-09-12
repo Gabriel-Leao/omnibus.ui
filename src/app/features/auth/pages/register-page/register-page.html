@@ -1,44 +1,49 @@
-<app-comic-panel caption="Origem — Criar conta">
+<app-comic-panel [caption]="i18n.dict().auth.register.caption">
   <form class="flex flex-col gap-5" (submit)="$event.preventDefault(); submit()">
     <div>
-      <h1 class="font-display text-3xl tracking-wide text-ink">Comece sua coleção</h1>
-      <p class="mt-1 text-sm text-ink-soft">Leva menos de um minuto.</p>
+      <h1 class="font-display text-3xl tracking-wide text-ink">
+        {{ i18n.dict().auth.register.title }}
+      </h1>
+      <p class="mt-1 text-sm text-ink-soft">{{ i18n.dict().auth.register.subtitle }}</p>
     </div>
 
     <app-input-field
-      label="Nome"
-      placeholder="Seu nome completo"
+      [label]="i18n.dict().auth.register.nameLabel"
+      [placeholder]="i18n.dict().auth.register.namePlaceholder"
       autocomplete="name"
       [(value)]="name"
     />
 
     <app-input-field
-      label="E-mail"
+      [label]="i18n.dict().auth.register.emailLabel"
       type="email"
-      placeholder="voce@email.com"
+      [placeholder]="i18n.dict().auth.register.emailPlaceholder"
       autocomplete="email"
       [(value)]="email"
     />
 
     <app-input-field
-      label="Data de nascimento"
-      type="date"
-      hint="É preciso ter 18 anos ou mais."
-      [(value)]="birthDate"
+      [label]="i18n.dict().auth.register.birthDateLabel"
+      type="text"
+      inputmode="numeric"
+      [placeholder]="i18n.dict().auth.register.birthDatePlaceholder"
+      [hint]="i18n.dict().auth.register.birthDateHint"
+      [mask]="formatBirthDate"
+      [(value)]="birthDateDisplay"
     />
 
     <app-input-field
-      label="Senha"
+      [label]="i18n.dict().auth.register.passwordLabel"
       type="password"
-      placeholder="Mínimo de 8 caracteres"
+      [placeholder]="i18n.dict().auth.register.passwordPlaceholder"
       autocomplete="new-password"
       [(value)]="password"
     />
 
     <app-input-field
-      label="Confirmar senha"
+      [label]="i18n.dict().auth.register.confirmPasswordLabel"
       type="password"
-      placeholder="Repita a senha"
+      [placeholder]="i18n.dict().auth.register.confirmPasswordPlaceholder"
       autocomplete="new-password"
       [(value)]="confirmPassword"
     />
@@ -47,11 +52,15 @@
       <p class="text-sm font-semibold text-accent-red">{{ formError() }}</p>
     }
 
-    <app-button type="submit" [loading]="submitting()">Criar conta</app-button>
+    <app-button type="submit" [loading]="submitting()" [disabled]="!formValid()">{{
+      i18n.dict().auth.register.submit
+    }}</app-button>
 
     <p class="text-center text-sm text-ink-soft">
-      Já tem conta?
-      <a routerLink="/login" class="font-semibold text-ink underline">Entrar</a>
+      {{ i18n.dict().auth.register.hasAccount }}
+      <a routerLink="/login" class="font-semibold text-ink underline">{{
+        i18n.dict().auth.register.loginLink
+      }}</a>
     </p>
   </form>
 </app-comic-panel>
