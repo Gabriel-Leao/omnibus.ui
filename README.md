@@ -1,167 +1,169 @@
 # Omnibus UI
 
-Aplicação web de e-commerce de quadrinhos (HQs), construída com Angular e TypeScript. É o frontend
-do ecossistema Omnibus, consumindo a API REST desenvolvida em [`omnibus.api`](#projeto-relacionado).
+A web e-commerce application for comic books, built with Angular and TypeScript. It's the frontend
+of the Omnibus ecosystem, consuming the REST API developed in
+[`omnibus.api`](#related-project).
 
 ---
 
-## Status atual
+## Current status
 
-O projeto tem uma base de autenticação completa (login, registro, ativação de conta por OTP,
-recuperação de senha) e um design system próprio com identidade visual retrô de quadrinho, ambos
-integrados à API real. Internacionalização (pt-BR e en-GB) foi adicionada recentemente.
+The project has a complete authentication foundation (login, registration, OTP account
+activation, password recovery) and its own design system with a retro comic-book visual identity,
+both integrated with the real API. Internationalisation (pt-BR, en-US and es) was added recently.
 
-Ainda não implementado: catálogo de produtos, carrinho e pedidos. A página `/home` existe como
-placeholder para esse território.
+Not yet implemented: product catalogue, cart and orders. The `/home` page exists as a placeholder
+for that territory.
 
 ## Stack
 
-| Categoria           | Tecnologia                                                                                   |
-| ------------------- | -------------------------------------------------------------------------------------------- |
-| Framework           | Angular 21 (standalone, zoneless — sem `zone.js`)                                            |
-| Renderização        | SSR via `@angular/ssr` + Express (`src/server.ts`); todas as rotas em `RenderMode.Prerender` |
-| Linguagem           | TypeScript 5.9 (`strict`)                                                                    |
-| Estilização         | Tailwind CSS 4 (`@tailwindcss/postcss`)                                                      |
-| Reatividade         | Angular Signals para estado local/UI; RxJS para HTTP e composição assíncrona                 |
-| Roteamento          | Angular Router, lazy-loaded por página (`loadComponent`)                                     |
-| Internacionalização | Serviço próprio baseado em signals (`core/i18n`) — pt-BR e en-GB                             |
-| Testes unitários    | Vitest, via `@angular/build:unit-test`                                                       |
-| Testes E2E          | Planejados; Playwright ainda não está no repositório                                         |
-| Deploy              | Vercel                                                                                       |
+| Category             | Technology                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| Framework            | Angular 21 (standalone, zoneless — no `zone.js`)                                            |
+| Rendering            | SSR via `@angular/ssr` + Express (`src/server.ts`); every route uses `RenderMode.Prerender` |
+| Language             | TypeScript 5.9 (`strict`)                                                                   |
+| Styling              | Tailwind CSS 4 (`@tailwindcss/postcss`)                                                     |
+| Reactivity           | Angular Signals for local/UI state; RxJS for HTTP and async composition                     |
+| Routing              | Angular Router, lazy-loaded per page (`loadComponent`)                                      |
+| Internationalisation | Own signal-based service (`core/i18n`) — pt-BR, en-US and es                                |
+| Unit testing         | Vitest, via `@angular/build:unit-test`                                                      |
+| E2E testing          | Planned; Playwright isn't in the repository yet                                             |
+| Deployment           | Vercel                                                                                      |
 
-## Arquitetura
+## Architecture
 
-O código é organizado por feature, não por tipo técnico:
+The code is organised by feature, not by technical type:
 
 ```text
 src/app/
-├── core/        # infraestrutura transversal: auth, http, i18n, theme, otp
-├── shared/      # componentes de UI e utilitários sem dependência de feature
-├── features/    # áreas funcionais: auth, home, errors
-├── layout/      # casca da aplicação (header, app-shell)
+├── core/        # cross-cutting infrastructure: auth, http, i18n, theme, otp
+├── shared/      # UI components and utilities with no feature dependency
+├── features/    # functional areas: auth, home, errors
+├── layout/      # application shell (header, app-shell)
 ├── app.ts
 ├── app.config.ts
 └── app.routes.ts
 ```
 
-Regras de dependência: `core` e `shared` não conhecem `features`; uma feature pode depender de
-`core` e `shared`, nunca o inverso. Signals cobrem estado local, estado derivado e valores de UI;
-RxJS cobre HTTP, eventos assíncronos e composição de streams — cada abstração é usada onde é
-naturalmente adequada, sem sobreposição.
+Dependency rules: `core` and `shared` know nothing about `features`; a feature can depend on
+`core` and `shared`, never the other way round. Signals cover local state, derived state and UI
+values; RxJS covers HTTP, async events and stream composition — each abstraction is used where it
+naturally fits, with no overlap.
 
-O frontend não é fonte de verdade para autorização: qualquer controle de acesso na interface
-(esconder elementos, proteger rotas) existe para UX. A autoridade final permanece na API.
+The frontend is not the source of truth for authorisation: any access control in the interface
+(hiding elements, guarding routes) exists for UX. Final authority stays with the API.
 
-## Autenticação
+## Authentication
 
-`AuthApiService` (`core/auth/auth-api.service.ts`) cobre login, registro, ativação de conta por
-OTP (com reenvio), e o fluxo completo de recuperação de senha (solicitar código, verificar código,
-confirmar nova senha). A sessão é mantida em `AuthSessionService`; `PasswordResetSessionService`
-guarda o token de curta duração emitido entre a verificação do código e a confirmação da nova
-senha. `passwordResetGuard` impede acesso direto à tela de nova senha sem esse token.
+`AuthApiService` (`core/auth/auth-api.service.ts`) covers login, registration, OTP account
+activation (with resend), and the complete password recovery flow (request code, verify code,
+confirm new password). The session is kept in `AuthSessionService`; `PasswordResetSessionService`
+holds the short-lived token issued between code verification and confirming the new password.
+`passwordResetGuard` blocks direct access to the new-password screen without that token.
 
-Cada página valida seus próprios campos em `shared/utils/validators.ts` através de um `computed`
-(`formValid`); o botão de envio fica desabilitado enquanto o formulário não estiver válido, então
-não existe caminho para submeter um formulário com dado inválido — os campos usam as mesmas
-restrições que a API já aplica (ver os comentários em `validators.ts`, que apontam para os DTOs
-correspondentes em `omnibus.api`).
+Each page validates its own fields in `shared/utils/validators.ts` through a `computed`
+(`formValid`); the submit button stays disabled while the form isn't valid, so there's no path to
+submitting a form with invalid data — the fields use the same constraints the API already enforces
+(see the comments in `validators.ts`, which point to the corresponding DTOs in `omnibus.api`).
 
-O campo de data de nascimento não usa `<input type="date">` nativo: o placeholder desse controle
-("dd/mm/yyyy", segmentos em branco, ...) é renderizado pelo próprio navegador seguindo a
-localidade do sistema operacional/navegador, não o idioma escolhido no app — não há como fazê-lo
-dizer "aaaa" quando o app está em português. Em vez disso, é um campo de texto com máscara
-(`shared/utils/date-mask.ts`): `formatDateInput` insere as barras enquanto o usuário digita e
-`parseDateInputToIso` converte o valor digitado para `yyyy-MM-dd` (o formato que a API espera para
-`LocalDate`), validando que é uma data de calendário real. A ordem dos campos (dia/mês/ano ou
-mês/dia/ano) e o placeholder acompanham o idioma ativo.
+The date-of-birth field doesn't use a native `<input type="date">`: that control's placeholder
+("dd/mm/yyyy", blank segments, ...) is rendered by the browser itself following the operating
+system/browser locale, not the language chosen in the app — there's no way to make it say "aaaa"
+when the app is in Portuguese. Instead, it's a masked text field (`shared/utils/date-mask.ts`):
+`formatDateInput` inserts the slashes as the user types, and `parseDateInputToIso` converts the
+typed value into `yyyy-MM-dd` (the format the API expects for `LocalDate`), validating that it's a
+real calendar date. The field order (day/month/year or month/day/year) and the placeholder follow
+the active language.
 
-## Internacionalização
+## Internationalisation
 
-O app suporta três idiomas: português (Brasil), inglês (EUA) e espanhol — en-US é a variante única
-de inglês (a mais falada globalmente; o app não distingue variantes regionais de inglês). Na
-primeira visita, o idioma é detectado a partir da preferência do navegador (`navigator.languages`
-— a lista completa de idiomas preferidos, alguns navegadores permitem configurar mais de um, em
-ordem de prioridade): a lista é percorrida em ordem até achar a primeira entrada reconhecida —
-português (`pt`, `pt-BR`, `pt-PT`, ...) vira pt-BR; espanhol (`es`, `es-ES`, `es-MX`, ...) vira es;
-qualquer variante de inglês vira en-US. Um idioma preferido antes desses mas sem dicionário no app
-(alemão, por exemplo) é apenas pulado, não conta como voto para inglês. Sem nada reconhecível em
-nenhuma posição da lista, o padrão é en-US. A implementação é
-um serviço de signals (`I18nService`, em `core/i18n/`) — não uma biblioteca externa nem o
-mecanismo de i18n nativo do Angular — pelo mesmo motivo que `ThemeService` também não usa nada
-externo: é estado de UI local, síncrono, e a alternância de idioma no seletor deve refletir na tela
-imediatamente, sem rebuild.
+The app supports three languages: Portuguese (Brazil), English (US) and Spanish — en-US is the
+app's only English variant (the most widely spoken globally; the app doesn't distinguish regional
+English variants). On the first visit, the language is detected from the browser's preference
+(`navigator.languages` — the full list of preferred languages; some browsers let you configure
+more than one, in priority order): the list is scanned in order until the first recognised entry
+is found — Portuguese (`pt`, `pt-BR`, `pt-PT`, ...) becomes pt-BR; Spanish (`es`, `es-ES`,
+`es-MX`, ...) becomes es; any English variant becomes en-US. A preferred language ahead of these
+but with no dictionary in the app (German, say) is simply skipped, not counted as a vote for
+English. With nothing recognisable anywhere in the list, the default is en-US. The implementation
+is a signal-based service (`I18nService`, in `core/i18n/`) — not an external library, nor
+Angular's native i18n mechanism — for the same reason `ThemeService` also avoids anything
+external: it's local, synchronous UI state, and switching languages in the selector must reflect
+on screen immediately, with no rebuild.
 
-- `core/i18n/translations/translations.ts` define a interface `Translations`, que todo dicionário
-  precisa implementar por completo — uma string faltando em um idioma é erro de compilação, não um
-  buraco silencioso na tela.
-- `pt-br.ts`, `en-us.ts` e `es.ts` implementam essa interface. Textos parametrizados (um dígito,
-  uma contagem regressiva, um número de reenvios restantes) são funções, não strings com
-  placeholder, para manter a interpolação com tipagem.
-- O idioma escolhido no seletor persiste em `localStorage` (sobrepondo a detecção do navegador
-  nas próximas visitas) e é refletido em `<html lang>`.
-- O componente `shared/ui/language-switcher` (botão de globo no cabeçalho) alterna entre os três
-  idiomas.
+- `core/i18n/translations/translations.ts` defines the `Translations` interface, which every
+  dictionary must implement in full — a missing string in one language is a compile error, not a
+  silent gap on screen.
+- `pt-br.ts`, `en-us.ts` and `es.ts` implement that interface. Parameterised copy (a digit, a
+  countdown, a number of resends left) are functions, not strings with a placeholder, to keep
+  interpolation type-safe.
+- The language chosen in the selector persists in `localStorage` (overriding browser detection on
+  subsequent visits) and is reflected in `<html lang>`.
+- The `shared/ui/language-switcher` component (globe button in the header) switches between the
+  three languages.
 
-Erros vindos da API também passam por essa camada. `GlobalExceptionHandler`, em `omnibus.api`,
-sempre retorna uma mensagem de erro no corpo da resposta, mas essa mensagem é uma string fixa
-definida no backend — sem noção de idioma. `core/i18n/api-error-translations.ts` mapeia o conjunto
-de mensagens que o backend efetivamente produz (catalogadas a partir do próprio código-fonte de
-`omnibus.api`) para o idioma corrente; uma mensagem do backend que não está nesse mapa nunca é
-exibida sem tradução — o app usa o texto de erro genérico da página em vez disso. Isso também evita
-vazar informação interna ao usuário (como o identificador de um registro em uma mensagem de erro
-que não deveria alcançá-lo).
+Errors coming from the API also go through this layer. `GlobalExceptionHandler`, in
+`omnibus.api`, always returns an error message in the response body, but that message is a fixed
+string defined on the backend — with no notion of language. `core/i18n/api-error-translations.ts`
+maps the set of messages the backend actually produces (catalogued from `omnibus.api`'s own
+source code) to the current language; a backend message that isn't in that map is never shown
+untranslated — the app uses the page's generic error text instead. This also avoids leaking
+internal information to the user (such as a record's identifier in an error message that
+shouldn't reach them).
 
-Um erro de formulário (de validação ou vindo da API) nunca é guardado como a string já resolvida —
-isso a congelaria no idioma ativo no momento em que o erro apareceu, ficando desatualizada se o
-usuário trocar de idioma pelo seletor enquanto o erro ainda está na tela. Em vez disso,
-`core/i18n/error-resolver.ts` define `ErrorResolver`, uma função de `Translations` para `string`;
-cada página guarda essa função (por exemplo, `(t) => t.auth.login.fallbackError`) e deriva o texto
-exibido com um `computed` que a invoca contra `i18n.dict()` — a mesma troca de idioma que já
-atualiza o resto da página também retraduz o erro.
+A form error (whether a validation error or one coming from the API) is never stored as the
+already-resolved string — that would freeze it in whatever language was active when the error
+appeared, leaving it stale if the user switches languages via the selector while the error is
+still on screen. Instead, `core/i18n/error-resolver.ts` defines `ErrorResolver`, a function from
+`Translations` to `string`; each page stores that function (for example,
+`(t) => t.auth.login.fallbackError`) and derives the displayed text with a `computed` that
+invokes it against `i18n.dict()` — the same language switch that already updates the rest of the
+page also re-translates the error.
 
-## Configuração de ambiente
+## Environment configuration
 
-Valores por ambiente usam o mecanismo nativo do Angular (`fileReplacements`), não variáveis lidas
-em runtime: `environment.ts` é a configuração padrão (usada no build de produção,
-`https://api.omnibus.com`); `environment.development.ts` substitui essa configuração quando o build
-roda com `--configuration development` (`npm run dev` / `npm run watch`, apontando para
-`http://localhost:8080`). Qualquer valor em `environments/` é público — vai para o bundle enviado
-ao navegador.
+Per-environment values use Angular's native mechanism (`fileReplacements`), not variables read at
+runtime: `environment.ts` is the default configuration (used in the production build,
+`https://api.omnibus.com`); `environment.development.ts` replaces that configuration when the
+build runs with `--configuration development` (`npm run dev` / `npm run watch`, pointing at
+`http://localhost:8080`). Any value under `environments/` is public — it ships in the bundle sent
+to the browser.
 
-## Como rodar
+## Running the project
 
-Pré-requisitos: Node.js compatível com Angular 21 e npm.
+Prerequisites: a Node.js version compatible with Angular 21, and npm.
 
 ```bash
 npm install
 
-npm run dev              # ambiente de desenvolvimento (ng serve)
-npm run build            # build de produção
-npm run watch            # build em modo watch (desenvolvimento)
-npm run serve:ssr:omnibus.ui   # roda o servidor Node com o build de SSR já gerado
+npm run dev              # development environment (ng serve)
+npm run build            # production build
+npm run watch            # watch-mode build (development)
+npm run serve:ssr:omnibus.ui   # runs the Node server against the already-built SSR output
 ```
 
-Não existe script `start` — o comando de desenvolvimento é `npm run dev`.
+There's no `start` script — the development command is `npm run dev`.
 
-## Testes
+## Testing
 
 ```bash
 npm test
 ```
 
-Executado com Vitest através do builder unificado de testes do Angular CLI. Cobertura atual:
-suíte base do componente raiz, gerada pelo scaffold do Angular CLI. Testes end-to-end com
-Playwright estão planejados, mas ainda não implementados.
+Run with Vitest through the Angular CLI's unified test builder. Current coverage: the base
+root-component suite generated by the Angular CLI scaffold. End-to-end tests with Playwright are
+planned, but not yet implemented.
 
-## Qualidade de código
+## Code quality
 
-- **TypeScript** em modo `strict`, com `noImplicitOverride`, `noPropertyAccessFromIndexSignature`,
-  `noImplicitReturns` e `noFallthroughCasesInSwitch` habilitados; o compilador Angular roda com
-  `strictInjectionParameters`, `strictInputAccessModifiers` e `strictTemplates`.
-- **ESLint** (flat config): `typescript-eslint` e `angular-eslint` (incluindo regras de
-  acessibilidade de template), `eslint-plugin-simple-import-sort`, `no-duplicate-imports`,
+- **TypeScript** in `strict` mode, with `noImplicitOverride`, `noPropertyAccessFromIndexSignature`,
+  `noImplicitReturns` and `noFallthroughCasesInSwitch` enabled; the Angular compiler runs with
+  `strictInjectionParameters`, `strictInputAccessModifiers` and `strictTemplates`.
+- **ESLint** (flat config): `typescript-eslint` and `angular-eslint` (including template
+  accessibility rules), `eslint-plugin-simple-import-sort`, `no-duplicate-imports`,
   `@typescript-eslint/consistent-type-imports`.
-- **Prettier**, integrado ao ESLint: `printWidth: 100`, `singleQuote: true`, `trailingComma: "all"`.
+- **Prettier**, integrated with ESLint: `printWidth: 100`, `singleQuote: true`,
+  `trailingComma: "all"`.
 
 ```bash
 npm run lint
@@ -169,48 +171,48 @@ npm run format
 npm run format:check
 ```
 
-## Integração contínua
+## Continuous integration
 
-Não há workflow de CI configurado neste repositório no momento. `npm run lint`, `npm run
-format:check`, `npm test` e `npm run build` cobrem as verificações que um pipeline rodaria; até
-haver automação, é responsabilidade de quem abre o PR rodá-los localmente.
+There's no CI workflow configured in this repository at the moment. `npm run lint`, `npm run
+format:check`, `npm test` and `npm run build` cover the checks a pipeline would run; until
+there's automation, it's the responsibility of whoever opens the PR to run them locally.
 
-## Deploy
+## Deployment
 
-Hospedado na Vercel. O `apiUrl` consumido pelo app vem de `src/environments/environment.ts`
-(substituído por `environment.development.ts` apenas em builds com `--configuration
-development`) — é um valor fixo no código-fonte, não uma variável de ambiente lida em tempo de
-deploy; apontar para uma API diferente em produção exige alterar e commitar esse arquivo.
+Hosted on Vercel. The `apiUrl` the app consumes comes from `src/environments/environment.ts`
+(replaced by `environment.development.ts` only in builds with `--configuration development`) —
+it's a fixed value in the source code, not an environment variable read at deploy time; pointing
+at a different API in production requires changing and committing that file.
 
-Como todas as rotas estão em `RenderMode.Prerender`, o build gera HTML estático por rota; o
-servidor Express (`server.ts`) existe para SSR sob demanda mas não é necessário nesse modelo de
-hospedagem. `vercel.json` define o fallback para `index.csr.html` em qualquer caminho sem
-correspondência entre os arquivos pré-renderizados, o que inclui a página 404 temática do app.
+Since every route uses `RenderMode.Prerender`, the build generates static HTML per route; the
+Express server (`server.ts`) exists for on-demand SSR but isn't required under this hosting
+model. `vercel.json` sets the fallback to `index.csr.html` for any path with no match among the
+pre-rendered files, which includes the app's themed 404 page.
 
 ## Roadmap
 
 - [x] Bootstrap (Angular CLI, standalone, zoneless, SSR)
-- [x] Design system próprio (`shared/ui`) com identidade visual retrô de quadrinho
-- [x] Autenticação completa (login, registro, ativação por OTP, recuperação de senha)
-- [x] Internacionalização (pt-BR, en-GB) e tradução de mensagens de erro da API
-- [ ] Catálogo de produtos
-- [ ] Carrinho e pedidos
-- [ ] Testes end-to-end (Playwright)
-- [ ] Pipeline de CI
+- [x] Own design system (`shared/ui`) with a retro comic-book visual identity
+- [x] Complete authentication (login, registration, OTP activation, password recovery)
+- [x] Internationalisation (pt-BR, en-US, es) and translation of API error messages
+- [ ] Product catalogue
+- [ ] Cart and orders
+- [ ] End-to-end tests (Playwright)
+- [ ] CI pipeline
 
-## Projeto relacionado
+## Related project
 
 ```text
 Omnibus
-├── omnibus.api   Java / Spring Boot — backend REST
-└── omnibus.ui    Angular / TypeScript — este repositório
+├── omnibus.api   Java / Spring Boot — REST backend
+└── omnibus.ui    Angular / TypeScript — this repository
 ```
 
-[`omnibus.api`](https://github.com/Gabriel-Leao/omnibus.api) é o backend REST do Omnibus,
-desenvolvido em Java/Spring Boot com arquitetura hexagonal (Ports & Adapters), responsável pelas
-regras de negócio, persistência, autenticação e autorização. Este repositório consome essa API e
-não deve ser tratado como fonte de verdade para regras de negócio ou autorização.
+[`omnibus.api`](https://github.com/Gabriel-Leao/omnibus.api) is Omnibus's REST backend, built in
+Java/Spring Boot with Hexagonal Architecture (Ports & Adapters), responsible for business rules,
+persistence, authentication and authorisation. This repository consumes that API and should not
+be treated as the source of truth for business rules or authorisation.
 
-## Licença
+## Licence
 
-MIT — ver [`LICENSE`](./LICENSE).
+MIT — see [`LICENSE`](./LICENSE).
